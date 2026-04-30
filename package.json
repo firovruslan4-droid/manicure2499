@@ -4,7 +4,7 @@
   "description": "Full-stack web app for manicure salon Vera",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "prisma db push && node server.js",
     "dev": "node --watch server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

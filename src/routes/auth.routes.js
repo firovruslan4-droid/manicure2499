@@ -5,6 +5,22 @@ const { signAccessToken } = require("../utils/jwt");
 
 const router = express.Router();
 
+function mapAuthError(error) {
+  if (error?.message === "JWT_SECRET_MISSING") {
+    return "На сервере не задан JWT_SECRET";
+  }
+
+  if (error?.code === "P2021") {
+    return "Таблицы базы данных не созданы. Выполните prisma db push или миграции";
+  }
+
+  if (error?.code === "P1000" || error?.code === "P1001") {
+    return "Сервер не может подключиться к базе данных";
+  }
+
+  return null;
+}
+
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -51,7 +67,8 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: "Ошибка регистрации" });
+    const mappedError = mapAuthError(error);
+    return res.status(500).json({ message: mappedError || "Ошибка регистрации" });
   }
 });
 
@@ -88,7 +105,8 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: "Ошибка входа" });
+    const mappedError = mapAuthError(error);
+    return res.status(500).json({ message: mappedError || "Ошибка входа" });
   }
 });
 
