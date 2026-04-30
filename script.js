@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Открытие фото в полном размере (lightbox)
 document.addEventListener('DOMContentLoaded', function() {
-    const galleryImages = document.querySelectorAll('.gallery-image img');
-    if (!galleryImages.length) return;
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    if (!galleryItems.length) return;
 
     const lightbox = document.createElement('div');
     lightbox.className = 'lightbox';
@@ -117,9 +117,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.overflow = 'hidden';
     }
 
-    galleryImages.forEach((img) => {
-        img.addEventListener('click', function() {
-            openLightbox(this.src, this.alt);
+    galleryItems.forEach((item) => {
+        item.addEventListener('click', function(e) {
+            const image = item.querySelector('.gallery-image img');
+            if (!image) return;
+
+            e.preventDefault();
+            openLightbox(image.src, image.alt);
         });
     });
 
