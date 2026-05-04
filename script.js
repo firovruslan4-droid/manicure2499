@@ -55,16 +55,81 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Фильтрация галереи (плавное появление/скрытие без резкого скачка сетки)
+// Фильтрация галереи: скрытые убираются из сетки, остальные плавно «съезжают» (FLIP)
 document.addEventListener('DOMContentLoaded', function() {
     const filterBtns = document.querySelectorAll('.filter-btn');
-    const galleryItems = document.querySelectorAll('.gallery-item');
+    const grid = document.querySelector('.gallery-grid');
 
-    if (filterBtns.length > 0 && galleryItems.length > 0) {
+    if (filterBtns.length > 0 && grid) {
         function applyGalleryFilter(category) {
-            galleryItems.forEach((item) => {
+            const items = Array.from(grid.querySelectorAll('.gallery-item'));
+            if (!items.length) return;
+
+            const beforeRects = new Map();
+            const wasShown = new Map();
+            items.forEach((el) => {
+                beforeRects.set(el, el.getBoundingClientRect());
+                wasShown.set(el, !el.classList.contains('gallery-item--hidden'));
+            });
+
+            items.forEach((item) => {
                 const show = category === 'all' || item.dataset.category === category;
                 item.classList.toggle('gallery-item--hidden', !show);
+            });
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    items.forEach((el) => {
+                        const nowShown = !el.classList.contains('gallery-item--hidden');
+                        if (!nowShown) {
+                            el.style.transition = '';
+                            el.style.transform = '';
+                            el.style.opacity = '';
+                            return;
+                        }
+
+                        if (!wasShown.get(el)) {
+                            el.style.opacity = '0';
+                            el.style.transition = 'opacity 0.45s ease';
+                            requestAnimationFrame(() => {
+                                el.style.opacity = '1';
+                            });
+                            setTimeout(() => {
+                                el.style.transition = '';
+                                el.style.opacity = '';
+                            }, 480);
+                            return;
+                        }
+
+                        const first = beforeRects.get(el);
+                        const last = el.getBoundingClientRect();
+                        const dx = first.left - last.left;
+                        const dy = first.top - last.top;
+
+                        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+                            return;
+                        }
+
+                        el.style.transition = 'none';
+                        el.style.transform = `translate(${dx}px, ${dy}px)`;
+                        void el.offsetWidth;
+                        requestAnimationFrame(() => {
+                            el.style.transition = 'transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)';
+                            el.style.transform = 'translate(0, 0)';
+                            const cleanup = () => {
+                                el.style.transition = '';
+                                el.style.transform = '';
+                            };
+                            el.addEventListener('transitionend', function onEnd(e) {
+                                if (e.propertyName === 'transform') {
+                                    el.removeEventListener('transitionend', onEnd);
+                                    cleanup();
+                                }
+                            });
+                            setTimeout(cleanup, 560);
+                        });
+                    });
+                });
             });
         }
 
